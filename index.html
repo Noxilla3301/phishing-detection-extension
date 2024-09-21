@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard (or chosen title)</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="about-box">
+      <h2>About:</h2>
+      <p>
+        This website helps you identify potential phishing scams. You can paste a URL or an email, and we will use AI and external services like PhishTank to give you a rating on how likely it is a scam.
+      </p>
+    </div>
+
+    <div class="toggle-container">
+      <button id="darkModeToggle">Toggle Dark Mode</button>
+    </div>
+
+    <div class="input-box">
+      <label for="urlInput">Enter Website URL:</label>
+      <input type="text" id="urlInput" placeholder="Paste URL here">
+      <button id="checkURLButton">Check URL</button>
+      <div id="urlResult"></div>
+    </div>
+
+    <div class="input-box">
+      <label for="emailInput">Paste email or message you feel is suspicious:</label>
+      <textarea id="emailInput" placeholder="Paste suspicious email/message here"></textarea>
+      <button id="checkEmailButton">Check Message</button>
+      <div id="emailResult"></div>
+    </div>
+  </div>
+
+  <!-- Include TensorFlow.js for model-related operations -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  
+  <!-- Your scripts for the website -->
+  <script src="scripts.js"></script>
+</body>
+</html>
