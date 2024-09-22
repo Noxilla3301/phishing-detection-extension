@@ -1,36 +1,73 @@
-// No access to DOM in service worker, so we cannot use document.createElement
+// Load TensorFlow.js and required dependencies
+const joblib = require('joblib');
 
-let model;
-loadModel();
+// Path to your saved model and vectorizer
+const MODEL_PATH = 'phishing_model.pkl';
+const VECTORIZER_PATH = 'vectorizer.pkl';
 
-// Load AI model (when available)
-async function loadModel() {
-  try {
-    // Assuming TensorFlow.js is included properly elsewhere
-    model = await tf.loadLayersModel('path/to/model.json'); // Replace with actual model path
-    console.log("Model loaded successfully.");
-  } catch (error) {
-    console.error("Error loading model:", error);
-  }
+let model, vectorizer;
+
+// Load the model and vectorizer
+async function loadModelAndVectorizer() {
+    try {
+        // Load the trained logistic regression model
+        model = joblib.load(MODEL_PATH);
+
+        // Load the vectorizer used to transform email text into numerical features
+        vectorizer = joblib.load(VECTORIZER_PATH);
+
+        console.log("Model and vectorizer loaded successfully.");
+    } catch (error) {
+        console.error("Error loading model or vectorizer:", error);
+    }
 }
 
-// Example function to check phishing URLs
+// Classify email or message content
+async function classifyEmail(emailContent) {
+    try {
+        // Clean and vectorize the email text
+        const emailCleaned = emailContent.toLowerCase().trim();
+        const emailVectorized = vectorizer.transform([emailCleaned]);
+
+        // Use the model to predict if the email is phishing or legitimate
+        const prediction = model.predict(emailVectorized);
+
+        // Return the prediction result
+        return prediction[0] === 1 ? 'Phishing' : 'Legitimate';
+    } catch (error) {
+        console.error("Error classifying email:", error);
+        return 'Error processing email';
+    }
+}
+
+// Listen for messages from the frontend (email classification requests)
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+    if (request.action === 'classifyEmail') {
+        const result = await classifyEmail(request.emailContent);
+        sendResponse({ result: result });
+    }
+});
+
+// Check phishing websites through PhishTank API (your friend can handle this)
 async function checkPhishTank(url) {
-  const apiURL = `https://checkurl.phishtank.com/api/url-check/${encodeURIComponent(url)}`;
-  
-  try {
-    const response = await fetch(apiURL);
-    if (!response.ok) {
-      throw new Error("API response was not OK");
-    }
+    const apiURL = `https://checkurl.phishtank.com/api/url-check/${encodeURIComponent(url)}`;
 
-    const data = await response.json(); // Correctly parse the JSON response
-    if (data.phish) {
-      console.log("This is a phishing site.");
-    } else {
-      console.log("This site is safe.");
+    try {
+        const response = await fetch(apiURL);
+        if (!response.ok) {
+            throw new Error("API response was not OK");
+        }
+
+        const data = await response.json(); // Correctly parse the JSON response
+        if (data.phish) {
+            console.log("This is a phishing site.");
+        } else {
+            console.log("This site is safe.");
+        }
+    } catch (error) {
+        console.error("Error fetching data from PhishTank:", error);
     }
-  } catch (error) {
-    console.error("Error fetching data from PhishTank:", error);
-  }
 }
+
+// Load model and vectorizer on startup
+loadModelAndVectorizer();
